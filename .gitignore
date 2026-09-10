@@ -1,0 +1,38 @@
+# Python: ambientes virtuais e arquivos gerados
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Configuracoes e dados privados (o exemplo pode ser versionado)
+.env
+.env.*
+!.env.example
+instance/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+.secret
+.password
+*.key
+*.pem
+*.eml
+
+# Arquivos temporarios, exports e ferramentas locais
+work/
+tmp/
+output/
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,11 @@
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+{% macro input(name, label, value='', type='text', required=true, hint='', max=200) %}
+<div class="field"><label for="{{ name }}">{{ label }}</label><input id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ '' if type == 'password' else (request.form.get(name, value) or '') }}" {% if required %}required{% endif %} maxlength="{{ max }}" {% if type == 'password' %}minlength="8"{% endif %} {% if hint %}aria-describedby="{{ name }}-hint"{% endif %}>{% if hint %}<small id="{{ name }}-hint">{{ hint }}</small>{% endif %}</div>
+{% endmacro %}
+{% macro status(ticket) %}<span class="status-text">{{ ticket.status }}</span>{% if ticket.overdue %}<small class="overdue">Prazo vencido</small>{% endif %}{% endmacro %}
+{% macro ticket_table(tickets) %}
+<div class="table-wrap"><table><thead><tr><th scope="col">Chamado</th><th scope="col">Local</th><th scope="col">Situação</th><th scope="col">Responsável</th><th scope="col">Prazo</th></tr></thead><tbody>
+{% for ticket in tickets %}<tr><td><a class="row-title" href="{{ url_for('main.ticket_detail', ticket_id=ticket.id) }}">{{ ticket.title }}</a><small>{{ ticket.reference }} · {{ ticket.category }}</small></td><td>{{ ticket.location.label }}</td><td>{{ status(ticket) }}</td><td>{{ ticket.provider.name if ticket.provider else 'Não atribuído' }}</td><td class="nowrap">{{ ticket.due_at|datebr }}</td></tr>{% else %}<tr><td colspan="5" class="empty">Nenhum chamado encontrado.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endmacro %}
+{% macro pager(pagination) %}{% if pagination.pages > 1 %}<nav class="pagination" aria-label="Paginação">{% if pagination.has_prev %}<a href="{{ url_for(request.endpoint, **dict(request.view_args, **dict(request.args, page=pagination.prev_num))) }}">← Anterior</a>{% endif %}<span>Página {{ pagination.page }} de {{ pagination.pages }}</span>{% if pagination.has_next %}<a href="{{ url_for(request.endpoint, **dict(request.view_args, **dict(request.args, page=pagination.next_num))) }}">Próxima →</a>{% endif %}</nav>{% endif %}{% endmacro %}

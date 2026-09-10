@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}HelpFlow{% endblock %} — Gestão de manutenção</title>
+  <meta name="description" content="Relate problemas, organize a manutenção e acompanhe cada serviço.">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body style="--accent: {{ g.company.accent if g.company else '#236448' }}">
+  <a class="skip" href="#main">Pular para o conteúdo</a>
+  <header class="topbar">
+    <a class="wordmark" href="{{ url_for('main.workspace') if current_user.is_authenticated else url_for('main.home') }}">Help<span>Flow</span><span class="wordmark-period">.</span></a>
+    <span class="product-name">Manutenção, em ordem.</span>
+    <nav class="top-actions" aria-label="Conta">
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('main.notifications') }}">Notificações{% if unread %} <span class="notification-count">({{ unread }})</span>{% endif %}</a>
+        <details class="account-menu"><summary>{{ current_user.name.split(' ')[0] }} <span aria-hidden="true">⌄</span></summary>
+          <div class="account-panel"><strong>{{ current_user.name }}</strong><p>{{ current_user.email }}</p><a href="{{ url_for('auth.account') }}">Minha conta</a><a href="{{ url_for('main.companies') }}">Minhas empresas</a><a href="{{ url_for('main.tickets', mine=1) }}">Meus relatos</a><form method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="text-button" type="submit">Sair da conta</button></form></div>
+        </details>
+      {% else %}<a href="{{ url_for('auth.login') }}">Entrar</a><a class="button light small" href="{{ url_for('auth.register') }}">Criar conta</a>{% endif %}
+    </nav>
+  </header>
+  <div class="app-layout {% if current_user.is_authenticated and g.company %}with-sidebar{% endif %}">
+  {% if current_user.is_authenticated and g.company %}
+    <aside class="sidebar">
+      <div class="company-heading">{% if g.company.logo_id %}<img src="{{ url_for('main.attachment', file_id=g.company.logo_id) }}" alt="" class="company-logo">{% endif %}<span>Empresa atual</span><strong>{{ g.company.name }}</strong><a href="{{ url_for('main.companies') }}">Trocar empresa <span aria-hidden="true">↗</span></a></div>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="side-nav">Menu de navegação <span aria-hidden="true">+</span></button>
+      <nav id="side-nav" aria-label="Principal">
+        {% set ep = request.endpoint %}
+        {% if is_manager %}<a class="{{ 'selected' if ep == 'main.dashboard' }}" href="{{ url_for('main.dashboard') }}">Visão geral</a>{% endif %}
+        <a class="{{ 'selected' if ep in ['main.tickets', 'main.ticket_detail'] }}" href="{{ url_for('main.tickets') }}">{{ 'Minhas demandas' if g.membership.role == 'provider' else 'Chamados' }}</a>
+        {% if is_manager %}
+          <a class="{{ 'selected' if ep in ['main.people','main.person'] and request.args.get('kind') != 'team' }}" href="{{ url_for('main.people') }}">Prestadores</a>
+          <a class="{{ 'selected' if ep == 'main.locations' }}" href="{{ url_for('main.locations') }}">Locais e equipamentos</a>
+          <a class="{{ 'selected' if ep == 'main.points' }}" href="{{ url_for('main.points') }}">QR Codes</a>
+          <div class="nav-divider"></div>
+          <a class="{{ 'selected' if ep == 'main.people' and request.args.get('kind') == 'team' }}" href="{{ url_for('main.people', kind='team') }}">Equipe e acessos</a>
+          <a class="{{ 'selected' if ep == 'main.settings' }}" href="{{ url_for('main.settings') }}">Configurações</a>
+        {% endif %}
+        <div class="nav-divider"></div><a href="{{ url_for('main.scan') }}">Ler um QR Code</a>
+        {% if g.company.public_portal %}<a href="{{ url_for('main.portal', slug=g.company.slug) }}">Portal do espaço <span aria-hidden="true">↗</span></a>{% endif %}
+      </nav>
+      <p class="sidebar-foot">{{ role_labels[g.membership.role] }}<br>{{ g.company.plan }} · {{ g.company.point_limit }} pontos QR</p>
+    </aside>
+  {% endif %}
+  <main id="main" class="main-content {% block main_class %}{% endblock %}">
+    {% for category, message in get_flashed_messages(with_categories=True) %}<div class="notice {{ category }}" role="status">{{ message }}</div>{% endfor %}
+    {% block content %}{% endblock %}
+    <footer class="footer"><span>HelpFlow</span><span>Do relato à resolução.</span></footer>
+  </main>
+  </div>
+</body>
+</html>

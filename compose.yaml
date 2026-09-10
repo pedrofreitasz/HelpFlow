@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: helpflow
+      POSTGRES_USER: helpflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U helpflow -d helpflow"]
+      interval: 5s
+      retries: 20
+  web:
+    build: .
+    environment: &app-env
+      DATABASE_URL: postgresql+psycopg://helpflow:${POSTGRES_PASSWORD}@db:5432/helpflow
+      SECRET_KEY: ${SECRET_KEY:?Defina SECRET_KEY no .env}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:5000}
+      APP_ENV: ${APP_ENV:-development}
+      MAIL_MODE: ${MAIL_MODE:-outbox}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-no-reply@example.com}
+      HOST: 0.0.0.0
+      RUN_JOBS_INLINE: 'false'
+    ports: ["5000:5000"]
+    volumes: ["app_data:/app/instance"]
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      retries: 10
+  worker:
+    build: .
+    command: ["flask", "--app", "helpflow:create_app", "worker"]
+    environment: *app-env
+    volumes: ["app_data:/app/instance"]
+    depends_on:
+      web:
+        condition: service_healthy
+volumes:
+  postgres_data:
+  app_data:

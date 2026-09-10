@@ -1,0 +1,2 @@
+{% extends 'base.html' %}{% block title %}Não foi possível continuar{% endblock %}
+{% block content %}<div class="error-page"><p class="eyebrow">HelpFlow / {{ code }}</p><h1>{{ 'Confira os dados.' if code==400 else 'Não foi possível continuar.' }}</h1><p role="alert">{{ message }}</p><div class="actions"><button class="button secondary" type="button" data-back>Voltar e corrigir</button><a href="{{ url_for('main.home') }}">Ir para o início</a></div></div>{% endblock %}
